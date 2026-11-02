@@ -290,20 +290,21 @@
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
       </button>
     </div>
-    <form class="form" data-booking-form>
+    <!-- method="post": se JavaScript non intercetta l'invio, i dati non finiscono mai nell'indirizzo della pagina -->
+    <form class="form" method="post" data-booking-form>
       <p class="form__intro">Lasciaci i tuoi dati: ti richiamiamo entro un giorno lavorativo per confermare data e ora.</p>
       <label class="field">
         <span class="field__label">Nome e cognome</span>
-        <input class="field__input" type="text" name="name" autocomplete="name" required>
+        <input class="field__input" type="text" name="name" autocomplete="name" maxlength="80" required>
       </label>
       <div class="field-row">
         <label class="field">
           <span class="field__label">Telefono</span>
-          <input class="field__input" type="tel" name="phone" autocomplete="tel" required>
+          <input class="field__input" type="tel" name="phone" autocomplete="tel" maxlength="25" pattern="[0-9 \+\(\)\-\.]{6,25}" title="Solo numeri, spazi e i simboli + ( ) - ." required>
         </label>
         <label class="field">
           <span class="field__label">Email</span>
-          <input class="field__input" type="email" name="email" autocomplete="email" required>
+          <input class="field__input" type="email" name="email" autocomplete="email" maxlength="120" required>
         </label>
       </div>
       <label class="field">
