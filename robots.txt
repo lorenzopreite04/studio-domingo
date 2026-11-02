@@ -1,5 +1,5 @@
-# DA PERSONALIZZARE: sostituire https://www.esempio.it con il dominio reale
+# Indirizzo del sito online: se cambia va aggiornato anche in index.html e sitemap.xml
 User-agent: *
 Allow: /
 
-Sitemap: https://www.esempio.it/sitemap.xml
+Sitemap: https://clinica-esempio-uimz.vercel.app/sitemap.xml

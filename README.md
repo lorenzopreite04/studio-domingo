@@ -39,7 +39,7 @@ poi aprire http://localhost:5173
 
 ## Cosa personalizzare
 
-Tutti i dati segnaposto contengono `Esempio`, `.example`, `vercel.app`, `000` o
+Tutti i dati segnaposto contengono `Esempio`, `.example`, `000` o
 `[parentesi quadre]`: cercandoli nei file si trovano tutti. L'email è su un dominio `.example`,
 riservato e che non riceve posta, così le richieste di prova della demo non finiscono a nessuno.
 
