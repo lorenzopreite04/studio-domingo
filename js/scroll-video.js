@@ -332,8 +332,8 @@
       window.scrollTo(0, top);
       return;
     }
-    // Circa 0,45 s per schermata, tra 1 e 3 secondi
-    const duration = Math.min(Math.max((Math.abs(distance) / window.innerHeight) * 450, 1000), 3000);
+    // Circa 0,9 s per schermata, tra 1,7 e 3,5 secondi (da una sezione alla successiva: ~1,7 s)
+    const duration = Math.min(Math.max((Math.abs(distance) / window.innerHeight) * 900, 1700), 3500);
     const start = performance.now();
     glideLock(mobileMedia.matches);
     const step = (now) => {
