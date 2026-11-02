@@ -44,11 +44,12 @@
     maxCanvasPixels: 3.5e6,
   };
 
-  // Schermata di caricamento: resta finché non sono arrivati tutti i fotogrammi, così il
-  // primo scroll non va a scatti. Con una connessione lenta si parte comunque dopo
-  // `maxWait` ms e i fotogrammi mancanti arrivano mentre si scorre. `minShow` evita un
-  // lampo quando i fotogrammi sono già nella cache del browser.
-  const LOADER = { minShow: 900, maxWait: 10000 };
+  // Schermata di caricamento: resta finché non è arrivata la quota `readyRatio` dei
+  // fotogrammi. Arrivano a raffinamento progressivo (vedi loadOrder), quindi a metà c'è già
+  // un fotogramma ogni due lungo tutto il video: lo scroll è fluido e il resto arriva mentre
+  // si legge il benvenuto. Con una connessione lenta si parte comunque dopo `maxWait` ms.
+  // `minShow` evita un lampo quando i fotogrammi sono già nella cache del browser.
+  const LOADER = { readyRatio: 0.5, minShow: 900, maxWait: 10000 };
 
   const section = document.getElementById('scroll-video');
   const sticky = section.querySelector('.scroll-video__sticky');
@@ -194,10 +195,11 @@
 
   function updateLoader() {
     if (loadingDone) return;
-    const percent = Math.floor((loadedCount / set.count) * 100);
+    const progress = loadedCount / (set.count * LOADER.readyRatio);
+    const percent = Math.min(Math.floor(progress * 100), 100);
     loaderValue.textContent = String(percent);
     loader.setAttribute('aria-valuenow', String(percent));
-    if (loadedCount === set.count) finishLoading();
+    if (progress >= 1) finishLoading();
   }
 
   function finishLoading() {
