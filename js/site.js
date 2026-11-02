@@ -99,6 +99,13 @@
 
   SV.subscribe(update);
 
+  // Diagnosi temporanea delle misure dello schermo su telefono (solo con ?debug nell'indirizzo)
+  if (new URLSearchParams(location.search).has('debug')) {
+    const s = document.createElement('script');
+    s.src = 'js/debug-viewport.js';
+    document.body.append(s);
+  }
+
   // Link diretti a una sezione (es. index.html#scene-services)
   const deepLink = [...document.querySelectorAll('[data-scene-link]')].find((a) => a.getAttribute('href') === location.hash);
   if (deepLink) SV.scrollToKey(deepLink.dataset.sceneLink, true);
