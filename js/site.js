@@ -11,42 +11,55 @@
   const RING_LENGTH = 2 * Math.PI * 22;
   const sceneLinks = document.querySelectorAll('.nav__link[data-scene-link], .menu__link[data-scene-link]');
   const hero = SV.keys.find((k) => k.id === 'hero');
-  const scenes = SV.keys.map((key) => ({
-    key,
-    el: document.querySelector(`[data-scene="${key.id}"]`),
-  }));
+  // Ogni elemento animato ricorda l'ultimo stato scritto: update() gira a ogni fotogramma
+  // dello scroll e toccare il DOM quando non cambia niente costa (ricalcolo degli stili)
+  const animated = (el) => ({ el, opacity: -1, transform: null, active: null });
+  const scenes = SV.keys.map((key) => ({ key, ...animated(document.querySelector(`[data-scene="${key.id}"]`)) }));
+  const headerState = animated(header);
   // Spostamento verticale (px) delle scene mentre compaiono/spariscono
   const SHIFT = reducedMotion ? 0 : 36;
 
   let currentPos = 0;
   let activeId = null;
+  let lastNext;
 
-  function setVisibility(el, opacity) {
-    el.style.opacity = opacity;
-    el.style.visibility = opacity === 0 ? 'hidden' : 'visible';
+  function setVisibility(item, opacity, transform) {
+    const { el } = item;
+    if (opacity !== item.opacity) {
+      if (item.opacity === -1 || (opacity === 0) !== (item.opacity === 0)) {
+        el.style.visibility = opacity === 0 ? 'hidden' : 'visible';
+      }
+      el.style.opacity = opacity;
+      item.opacity = opacity;
+    }
+    if (transform !== item.transform) {
+      el.style.transform = transform;
+      item.transform = transform;
+    }
     // Solo una scena (quasi) del tutto visibile è cliccabile e raggiungibile da tastiera
     const active = opacity > 0.6;
-    if (el.inert === active) el.inert = !active;
-    el.classList.toggle('is-active', active);
+    if (active !== item.active) {
+      el.inert = !active;
+      el.classList.toggle('is-active', active);
+      item.active = active;
+    }
   }
 
   function update(pos) {
     currentPos = pos;
     let best = null;
 
-    for (const { key, el } of scenes) {
-      const o = SV.keyOpacity(key, pos);
-      setVisibility(el, o);
-      const dir = pos < key.start ? 1 : -1;
-      el.style.transform = o > 0 && o < 1 ? `translate3d(0, ${(1 - o) * SHIFT * dir}px, 0)` : '';
-      if (!best || o > best.o) best = { id: key.id, o };
+    for (const scene of scenes) {
+      const o = SV.keyOpacity(scene.key, pos);
+      const dir = pos < scene.key.start ? 1 : -1;
+      setVisibility(scene, o, o > 0 && o < 1 ? `translate3d(0, ${((1 - o) * SHIFT * dir).toFixed(1)}px, 0)` : '');
+      if (!best || o > best.o) best = { id: scene.key.id, o };
     }
 
     // L'header compare insieme alla hero e poi resta
     const from = hero.start - hero.fadeIn;
     const h = hero.fadeIn ? clamp01((pos - from) / hero.fadeIn) : pos >= hero.start ? 1 : 0;
-    setVisibility(header, h);
-    header.style.transform = h < 1 ? `translate3d(0, ${(h - 1) * 16}px, 0)` : '';
+    setVisibility(headerState, h, h < 1 ? `translate3d(0, ${((h - 1) * 16).toFixed(1)}px, 0)` : '');
 
     if (best.id !== activeId) {
       activeId = best.id;
@@ -56,10 +69,13 @@
       });
     }
 
-    ring.style.strokeDashoffset = String(RING_LENGTH * (1 - pos / SV.length));
+    ring.style.strokeDashoffset = (RING_LENGTH * (1 - pos / SV.length)).toFixed(1);
     const next = nextKey(pos);
-    nextBtn.classList.toggle('is-last', !next);
-    nextBtn.setAttribute('aria-label', next ? 'Sezione successiva' : "Torna all'inizio");
+    if (next !== lastNext) {
+      lastNext = next;
+      nextBtn.classList.toggle('is-last', !next);
+      nextBtn.setAttribute('aria-label', next ? 'Sezione successiva' : "Torna all'inizio");
+    }
   }
 
   const nextKey = (pos) => SV.keys.find((k) => k.start + k.hold / 2 > pos + 1);

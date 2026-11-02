@@ -1,54 +1,69 @@
 (() => {
-  // Due set di frame estratti dallo stesso video, entrambi 1600x900:
-  // - desktop: tutti i frame (30 fps)
-  // - mobile: un frame su due (15 fps) e compressione più spinta, meno della metà del peso.
-  //   Su schermi verticali si vede solo una striscia del video: `pan` la sposta verso
-  //   il soggetto di ogni scena (vedi `focus` nelle keyframe)
+  // Due set di frame estratti dallo stesso video da strumenti/estrai-frame.py:
+  // - desktop: il video intero, 1600x900;
+  // - mobile: per i telefoni in verticale, già inquadrati (600x900) sul soggetto di ogni
+  //   scena. L'inquadratura (focus, zoom) si decide lì, non qui: questo file li disegna
+  //   semplicemente a tutto schermo. Le keyframe di quello script devono restare le
+  //   stesse di TIMELINE qui sotto.
   const FRAME_SETS = {
-    desktop: { dir: 'assets/frames/desktop', count: 553, pan: false },
-    mobile: { dir: 'assets/frames/mobile', count: 277, pan: true },
+    desktop: { dir: 'assets/frames/desktop', count: 553 },
+    mobile: { dir: 'assets/frames/mobile', count: 553 },
   };
+  // I fotogrammi restano nella cache del browser per una settimana (vercel.json): ogni volta
+  // che vengono rigenerati questo numero va aumentato, altrimenti chi ha già visitato il sito
+  // vede un misto di vecchi e nuovi. Va cambiato anche nei <link rel="preload"> di index.html
+  const FRAME_VERSION = 2;
 
-  // Timeline dello scroll. Le keyframe sono i frame (indice nel set desktop) su cui
-  // compare una scena: lì lo scroll si "ferma" per `hold` vh mentre il video resta fermo,
-  // così i contenuti si leggono con calma. Tra una keyframe e l'altra il video avanza.
-  // `focus` (0..1) è il punto orizzontale del frame da tenere al centro quando il video
-  // viene ritagliato molto (telefono in verticale): il soggetto della scena.
+  // Timeline dello scroll. Le keyframe sono i frame su cui compare una scena: lì lo scroll
+  // si "ferma" per `hold` vh mentre il video resta fermo, così i contenuti si leggono con
+  // calma. Tra una keyframe e l'altra il video avanza.
   const TIMELINE = {
     referenceFrames: FRAME_SETS.desktop.count,
     vhPerFrame: 0.7,
     maxFade: 35,
     keyframes: [
-      { id: 'intro', frame: 0, hold: 50, focus: 0.5 },
-      { id: 'hero', frame: 82, hold: 90, focus: 0.5 },
-      { id: 'about', frame: 278, hold: 90, focus: 0.25 },
-      { id: 'services', frame: 408, hold: 90, focus: 0.72 },
-      { id: 'contact', frame: 552, hold: 60, focus: 0.26 },
+      { id: 'intro', frame: 0, hold: 50 },
+      { id: 'hero', frame: 82, hold: 90 },
+      { id: 'about', frame: 278, hold: 90 },
+      { id: 'services', frame: 408, hold: 90 },
+      { id: 'contact', frame: 552, hold: 60 },
     ],
   };
 
   const CONFIG = {
-    // 0..1: quanto la posizione mostrata "insegue" quella reale ad ogni tick.
+    // 0..1: quanto la posizione mostrata "insegue" quella reale ogni 1/60 di secondo.
     // 1 = aggancio immediato allo scroll, valori bassi = movimento più morbido.
     smoothing: 0.18,
-    // Quante immagini scaricare in parallelo
-    concurrency: 8,
+    // Quante immagini scaricare in parallelo: con HTTP/2 viaggiano sulla stessa connessione,
+    // e sulle reti mobili conta soprattutto l'attesa di ogni singola richiesta
+    concurrency: 16,
     // Schermi in verticale e non più larghi di così usano il set mobile
     mobileQuery: '(orientation: portrait) and (max-width: 900px)',
+    // Risoluzione del canvas: segue la densità dello schermo (fino a 3x) ma senza superare
+    // questi pixel totali, oltre i quali ogni disegno costa di più senza guadagnare nitidezza
+    maxCanvasPixels: 3.5e6,
   };
+
+  // Schermata di caricamento: resta finché non sono arrivati tutti i fotogrammi, così il
+  // primo scroll non va a scatti. Con una connessione lenta si parte comunque dopo
+  // `maxWait` ms e i fotogrammi mancanti arrivano mentre si scorre. `minShow` evita un
+  // lampo quando i fotogrammi sono già nella cache del browser.
+  const LOADER = { minShow: 900, maxWait: 10000 };
 
   const section = document.getElementById('scroll-video');
   const sticky = section.querySelector('.scroll-video__sticky');
   const canvas = document.getElementById('scroll-video-canvas');
-  const loader = document.getElementById('scroll-video-loader');
-  const loaderBar = loader.querySelector('.scroll-video__loader-bar');
+  const loader = document.getElementById('site-loader');
+  const loaderValue = loader.querySelector('[data-loader-value]');
   const ctx = canvas.getContext('2d', { alpha: false });
   const mobileMedia = window.matchMedia(CONFIG.mobileQuery);
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const startTime = performance.now();
 
   let set = null;
   let frames = [];
   let loadedCount = 0;
+  let loadingDone = false;
   // Incrementato ad ogni cambio di set: i caricamenti del set precedente vengono ignorati
   let generation = 0;
 
@@ -56,11 +71,14 @@
   let targetPos = 0;
   let currentPos = 0;
   let drawnFrame = -1;
-  let drawnPos = -1;
   let rafId = null;
+  let lastTick = 0;
   const listeners = new Set();
+  // Misure della pagina, rilette solo al ridimensionamento: leggerle ad ogni scroll
+  // costringe il browser a ricalcolare il layout
+  const geometry = { top: 0, pxPerUnit: 1 };
 
-  const framePath = (s, i) => `${s.dir}/frame_${String(i + 1).padStart(4, '0')}.webp`;
+  const framePath = (s, i) => `${s.dir}/frame_${String(i + 1).padStart(4, '0')}.webp?v=${FRAME_VERSION}`;
 
   // --- Timeline -------------------------------------------------------------
 
@@ -86,24 +104,20 @@
   const timeline = buildTimeline();
   section.style.setProperty('--scroll-distance', `${timeline.length}vh`);
 
-  // Valore di una proprietà delle keyframe a una posizione della timeline: fermo durante
+  // Tempo del video normalizzato (0..1) a una posizione della timeline: fermo durante
   // le pause, interpolato linearmente tra una keyframe e l'altra
-  function interpolate(pos, prop) {
+  function posToTime(pos) {
     const { keys } = timeline;
     for (let i = 0; i < keys.length; i++) {
       const k = keys[i];
       if (pos <= k.end) {
-        if (pos >= k.start || i === 0) return k[prop];
+        if (pos >= k.start || i === 0) return k.t;
         const prev = keys[i - 1];
-        const ratio = (pos - prev.end) / (k.start - prev.end);
-        return prev[prop] + (k[prop] - prev[prop]) * ratio;
+        return prev.t + ((k.t - prev.t) * (pos - prev.end)) / (k.start - prev.end);
       }
     }
-    return keys[keys.length - 1][prop];
+    return 1;
   }
-
-  // Posizione nella timeline -> tempo del video normalizzato (0..1)
-  const posToTime = (pos) => interpolate(pos, 't');
 
   // 0..1: quanto è visibile la scena di una keyframe a una data posizione
   function keyOpacity(k, pos) {
@@ -162,8 +176,6 @@
     set = FRAME_SETS[name];
     frames = new Array(set.count).fill(null);
     loadedCount = 0;
-    loader.classList.remove('is-done');
-    updateLoader();
     drawnFrame = -1;
 
     const queue = loadOrder(set.count, currentFrameIndex());
@@ -181,11 +193,29 @@
   }
 
   function updateLoader() {
-    const ratio = set ? loadedCount / set.count : 0;
-    loaderBar.style.transform = `scaleX(${ratio})`;
-    loader.setAttribute('aria-valuenow', String(Math.round(ratio * 100)));
-    if (ratio === 1) loader.classList.add('is-done');
+    if (loadingDone) return;
+    const percent = Math.floor((loadedCount / set.count) * 100);
+    loaderValue.textContent = String(percent);
+    loader.setAttribute('aria-valuenow', String(percent));
+    if (loadedCount === set.count) finishLoading();
   }
+
+  function finishLoading() {
+    if (loadingDone) return;
+    loadingDone = true;
+    const wait = Math.max(0, LOADER.minShow - (performance.now() - startTime));
+    setTimeout(() => {
+      document.documentElement.classList.remove('is-loading');
+      loader.classList.add('is-done');
+      loader.addEventListener('transitionend', () => (loader.hidden = true), { once: true });
+    }, wait);
+  }
+
+  // In una scheda aperta in secondo piano il browser rimanda il caricamento delle immagini:
+  // l'attesa massima parte solo quando la pagina è visibile
+  const startMaxWait = () => setTimeout(finishLoading, LOADER.maxWait);
+  if (document.hidden) document.addEventListener('visibilitychange', startMaxWait, { once: true });
+  else startMaxWait();
 
   // Se il frame richiesto non è ancora arrivato, usa il più vicino già caricato
   function nearestLoaded(index) {
@@ -202,20 +232,25 @@
   // --- Disegno --------------------------------------------------------------
 
   function resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const w = Math.round(canvas.clientWidth * dpr);
-    const h = Math.round(canvas.clientHeight * dpr);
+    const cssW = canvas.clientWidth;
+    const cssH = canvas.clientHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 3, Math.sqrt(CONFIG.maxCanvasPixels / (cssW * cssH)));
+    const w = Math.round(cssW * dpr);
+    const h = Math.round(cssH * dpr);
     // Su mobile la comparsa/scomparsa della barra degli indirizzi lancia "resize":
     // ridimensionare il canvas (che lo svuota) solo se cambia davvero
     if (w !== canvas.width || h !== canvas.height) {
       canvas.width = w;
       canvas.height = h;
+      // Ridimensionare il canvas azzera anche questa impostazione: ingrandimento con un
+      // filtro di qualità, più nitido di quello predefinito
+      ctx.imageSmoothingQuality = 'high';
     }
     drawnFrame = -1;
-    draw(currentFrameIndex());
+    if (set) draw(currentFrameIndex());
   }
 
-  // Equivalente di "object-fit: cover", con punto focale orizzontale per il set mobile
+  // Equivalente di "object-fit: cover", centrato
   function draw(index) {
     const img = nearestLoaded(index);
     if (!img) return;
@@ -225,37 +260,38 @@
     const scale = Math.max(cw / img.naturalWidth, ch / img.naturalHeight);
     const w = img.naturalWidth * scale;
     const h = img.naturalHeight * scale;
-    const focus = set.pan ? interpolate(currentPos, 'focus') : 0.5;
-    const x = Math.min(Math.max(cw / 2 - focus * w, cw - w), 0);
-
-    ctx.drawImage(img, x, (ch - h) / 2, w, h);
+    ctx.drawImage(img, (cw - w) / 2, (ch - h) / 2, w, h);
     drawnFrame = frames[index] ? index : -1;
-    drawnPos = currentPos;
   }
 
   // --- Scroll ---------------------------------------------------------------
 
   // px di scroll per ogni vh della timeline. Usa l'altezza del contenitore sticky e non
   // window.innerHeight, che su mobile cambia con la barra degli indirizzi e farebbe "saltare" il video
-  const pxPerUnit = () => Math.max(section.offsetHeight - sticky.offsetHeight, 1) / timeline.length;
-
-  function scrollPos() {
-    const top = section.getBoundingClientRect().top;
-    return Math.min(Math.max(-top / pxPerUnit(), 0), timeline.length);
+  function measure() {
+    geometry.top = section.getBoundingClientRect().top + window.scrollY;
+    geometry.pxPerUnit = Math.max(section.offsetHeight - sticky.offsetHeight, 1) / timeline.length;
   }
 
-  function tick() {
+  const scrollPos = () =>
+    Math.min(Math.max((window.scrollY - geometry.top) / geometry.pxPerUnit, 0), timeline.length);
+
+  function tick(now) {
     rafId = null;
 
-    currentPos += (targetPos - currentPos) * CONFIG.smoothing;
+    // Inseguimento in base al tempo trascorso: stessa velocità su schermi a 60 e a 120 Hz
+    const dt = lastTick ? Math.min(now - lastTick, 100) : 1000 / 60;
+    lastTick = now;
+    const follow = 1 - (1 - CONFIG.smoothing) ** (dt / (1000 / 60));
+    currentPos += (targetPos - currentPos) * follow;
     if (Math.abs(targetPos - currentPos) < 0.01) currentPos = targetPos;
 
     const index = currentFrameIndex();
-    // Col pan l'inquadratura si sposta anche tra un frame e l'altro
-    if (index !== drawnFrame || (set.pan && currentPos !== drawnPos)) draw(index);
+    if (index !== drawnFrame) draw(index);
     listeners.forEach((fn) => fn(currentPos));
 
     if (currentPos !== targetPos) rafId = requestAnimationFrame(tick);
+    else lastTick = 0;
   }
 
   function requestRender() {
@@ -306,8 +342,7 @@
   function scrollToKey(id, instant) {
     const k = timeline.keys.find((key) => key.id === id);
     if (!k) return;
-    const sectionTop = section.getBoundingClientRect().top + window.scrollY;
-    animateScrollTo(sectionTop + (k.start + k.hold / 2) * pxPerUnit(), instant);
+    animateScrollTo(geometry.top + (k.start + k.hold / 2) * geometry.pxPerUnit, instant);
   }
 
   // Chi preferisce meno animazioni ottiene l'aggancio diretto, senza inerzia
@@ -317,6 +352,7 @@
 
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', () => {
+    measure();
     resize();
     onScroll();
   });
@@ -324,6 +360,7 @@
   mobileMedia.addEventListener('change', () => loadSet(setName()));
 
   // Riparte dal punto giusto se la pagina viene ricaricata a metà scroll
+  measure();
   targetPos = currentPos = scrollPos();
   loadSet(setName());
 

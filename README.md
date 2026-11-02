@@ -15,9 +15,10 @@ cookie.html           cookie policy
 css/style.css         stile del sito
 css/fonts.css         font ospitati in locale (Archivo, Figtree)
 css/page.css          stile delle pagine di testo (privacy, cookie, 404)
-js/scroll-video.js    motore del video: fotogrammi, timeline, scorrimento animato
+js/scroll-video.js    motore del video: fotogrammi, timeline, schermata di caricamento, scorrimento animato
+js/no-js.js           segnala che JavaScript è attivo (va caricato prima del resto)
 js/site.js            sezioni, menu, schede servizi, modulo di prenotazione
-assets/frames/        fotogrammi del video (desktop: 553, mobile: 277)
+assets/frames/        fotogrammi del video (desktop e mobile: 553 ciascuno)
 assets/fonts/         file dei font
 assets/og-image.jpg   anteprima per social e WhatsApp
 favicon.svg, favicon-32.png, apple-touch-icon.png
@@ -72,14 +73,31 @@ In `js/site.js`, oggetto `BOOKING`:
 ## Cambiare il video di sfondo
 
 ```
-pip install imageio-ffmpeg
+pip install imageio-ffmpeg pillow
 python strumenti/estrai-frame.py percorso/nuovo-video.mp4
 ```
 
-Lo script stampa quanti fotogrammi ha ogni set: vanno aggiornati in `FRAME_SETS` dentro
-`js/scroll-video.js`. In `TIMELINE`, sempre lì, ogni sezione ha il numero di fotogramma su cui
-compare (`frame`), la durata della pausa (`hold`) e, per i telefoni, il punto da inquadrare
-(`focus`, da 0 = bordo sinistro a 1 = bordo destro).
+Lo script crea due set di fotogrammi:
+
+- **desktop**: il video intero, 1600 px di larghezza;
+- **mobile**: per i telefoni in verticale, già ritagliati (600x900) sul soggetto di ogni scena,
+  così pesano e si decodificano circa 3 volte meno e lo scroll resta fluido.
+
+I fotogrammi su cui si fermano le sezioni sono salvati con qualità più alta (e su mobile al
+doppio della risoluzione). L'inquadratura sui telefoni si regola in `KEYFRAMES` dentro lo
+script:
+
+- `focus`: punto da tenere al centro (0 = bordo sinistro, 1 = destro);
+- `zoom`: meno di 1 per rimpicciolire il video, come nella hero;
+- `y`: posizione verticale del video quando è rimpicciolito.
+
+Dopo aver rigenerato i fotogrammi:
+
+1. aggiornare in `js/scroll-video.js` il numero di fotogrammi (`FRAME_SETS`) e, se cambiano, i
+   fotogrammi delle sezioni in `TIMELINE`, che devono restare uguali a `KEYFRAMES` dello script;
+2. aumentare `FRAME_VERSION` in `js/scroll-video.js` e il `?v=` dei due `<link rel="preload">`
+   in `index.html`: i fotogrammi restano nella cache dei browser per una settimana, e senza
+   questo chi ha già visitato il sito vedrebbe un misto di vecchi e nuovi.
 
 ## Pubblicazione
 

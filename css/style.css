@@ -22,8 +22,6 @@
 
   /* Colore di fondo preso dal video, visibile prima che il primo frame sia pronto */
   --bg: #2f74b5;
-  --loader: rgba(255, 255, 255, 0.85);
-  --loader-height: 3px;
 
   --font-display: 'Archivo', 'Arial Black', system-ui, sans-serif;
   --font-body: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -45,7 +43,8 @@ html {
   text-size-adjust: 100%;
 }
 
-html.is-locked {
+html.is-locked,
+html.is-loading {
   overflow: hidden;
 }
 
@@ -154,28 +153,125 @@ a {
   height: 100%;
 }
 
-.scroll-video__loader {
+/* --- Schermata di caricamento --------------------------------------------------
+ * Anello luminoso: una goccia sale dal fondo e diventa un punto al centro, l'anello ruota
+ * su se stesso e si chiude, poi si ridisegna dal basso. Tutte le animazioni durano un
+ * ciclo (--loader-cycle) e alla fine tornano allo stato iniziale: anello pieno con il punto.
+ */
+
+.loader {
+  --loader-cycle: 3.6s;
+  --loader-glow: #7cc4ff;
   position: fixed;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: var(--loader-height);
-  z-index: 60;
-  transition: opacity 0.6s ease;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 30px;
+  background: radial-gradient(70% 50% at 50% 45%, #0d3478 0%, #061a40 55%, #030c20 100%);
+  transition: opacity 0.7s ease, visibility 0s linear 0.7s;
 }
 
-.scroll-video__loader-bar {
-  display: block;
-  height: 100%;
-  width: 100%;
-  background: var(--loader);
-  transform: scaleX(0);
-  transform-origin: left center;
-  transition: transform 0.2s linear;
-}
-
-.scroll-video__loader.is-done {
+.loader.is-done {
   opacity: 0;
+  visibility: hidden;
+}
+
+.loader__mark {
+  position: relative;
+  width: 112px;
+  height: 112px;
+  perspective: 420px;
+}
+
+/* Alone azzurro dietro l'anello */
+.loader__mark::before {
+  content: '';
+  position: absolute;
+  inset: -40%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(47, 143, 224, 0.35), transparent);
+}
+
+.loader__ring {
+  position: absolute;
+  inset: 0;
+  animation: loader-ring var(--loader-cycle) cubic-bezier(0.55, 0, 0.45, 1) infinite;
+}
+
+.loader__ring svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 0 3px var(--loader-glow)) drop-shadow(0 0 12px rgba(47, 143, 224, 0.9));
+}
+
+.loader__disc {
+  animation: loader-disc var(--loader-cycle) ease infinite;
+}
+
+.loader__arc {
+  fill: none;
+  stroke: var(--white);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-dasharray: 1 1;
+  animation: loader-arc var(--loader-cycle) cubic-bezier(0.45, 0, 0.25, 1) infinite;
+}
+
+.loader__drop {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  background: var(--white);
+  box-shadow: 0 0 8px var(--loader-glow), 0 0 22px rgba(47, 143, 224, 0.9);
+  animation: loader-drop var(--loader-cycle) cubic-bezier(0.45, 0, 0.3, 1) infinite;
+}
+
+.loader__label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  color: rgba(169, 220, 255, 0.85);
+}
+
+@keyframes loader-ring {
+  0%, 30% { transform: rotate3d(1, -0.7, 0, 0deg) scale(1); opacity: 1; }
+  52% { transform: rotate3d(1, -0.7, 0, 170deg) scale(0.3); opacity: 0; }
+  52.1%, 100% { transform: rotate3d(1, -0.7, 0, 0deg) scale(1); opacity: 1; }
+}
+
+@keyframes loader-arc {
+  0%, 52% { stroke-dashoffset: 0; }
+  52.1%, 62% { stroke-dashoffset: 1; }
+  82%, 100% { stroke-dashoffset: 0; }
+}
+
+@keyframes loader-disc {
+  0%, 52% { opacity: 1; }
+  52.1%, 66% { opacity: 0; }
+  84%, 100% { opacity: 1; }
+}
+
+@keyframes loader-drop {
+  0%, 30% { transform: translateY(0) scale(1); opacity: 1; border-radius: 50%; }
+  50% { transform: translateY(0) scale(0.3); opacity: 1; }
+  58% { transform: translateY(0) scale(0); opacity: 0; }
+  /* Rinasce sul fondo dell'anello appena questo si è ridisegnato */
+  80% { transform: translateY(40px) scale(0.5, 0.35); opacity: 0; border-radius: 50%; }
+  84% { transform: translateY(39px) scale(0.75, 0.6); opacity: 1; border-radius: 50% 50% 40% 40% / 60% 60% 40% 40%; }
+  /* Sale allungandosi come una goccia e si arrotonda al centro */
+  93% { transform: translateY(12px) scale(0.7, 1.6); border-radius: 50% 50% 45% 45% / 40% 40% 60% 60%; }
+  100% { transform: translateY(0) scale(1); opacity: 1; border-radius: 50%; }
 }
 
 /* --- Header ----------------------------------------------------------------- */
@@ -297,6 +393,14 @@ a {
 
 .scene:not(.is-active) {
   pointer-events: none;
+}
+
+/* Durante le dissolvenze il video sotto cambia a ogni fotogramma e la sfocatura dei pannelli
+   andrebbe ricalcolata ogni volta (pesante sui telefoni): resta accesa solo quando la scena
+   è (quasi) del tutto visibile */
+.scene:not(.is-active) * {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 .scene__title,
@@ -1063,7 +1167,7 @@ a {
 }
 
 .no-js .scroll-video__canvas,
-.no-js .scroll-video__loader,
+.no-js .loader,
 .no-js .scroll-cue,
 .no-js .next-btn,
 .no-js .menu-btn,
@@ -1164,7 +1268,6 @@ a {
   :root {
     --gutter: 16px;
     --header-h: 52px;
-    --loader-height: 2px;
   }
 
   .site-header {
@@ -1309,9 +1412,12 @@ a {
     gap: 8px;
   }
 
+  /* Già dentro un pannello sfocato: una seconda sfocatura costerebbe senza vedersi */
   .stat {
     padding: 10px;
     background: rgba(11, 27, 48, 0.05);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 
   .stat__value {

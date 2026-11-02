@@ -62,9 +62,9 @@
   }
   </script>
 
-  <!-- Primo frame del set giusto: stessa soglia di mobileQuery in js/scroll-video.js -->
-  <link rel="preload" as="image" href="assets/frames/mobile/frame_0001.webp" media="(orientation: portrait) and (max-width: 900px)">
-  <link rel="preload" as="image" href="assets/frames/desktop/frame_0001.webp" media="not all and (orientation: portrait) and (max-width: 900px)">
+  <!-- Primo frame del set giusto: stessa soglia di mobileQuery e stessa ?v= di FRAME_VERSION in js/scroll-video.js -->
+  <link rel="preload" as="image" href="assets/frames/mobile/frame_0001.webp?v=2" media="(orientation: portrait) and (max-width: 900px)">
+  <link rel="preload" as="image" href="assets/frames/desktop/frame_0001.webp?v=2" media="not all and (orientation: portrait) and (max-width: 900px)">
   <link rel="preload" as="font" href="assets/fonts/archivo-latin.woff2" type="font/woff2" crossorigin>
   <link rel="preload" as="font" href="assets/fonts/figtree-latin.woff2" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/fonts.css">
@@ -74,6 +74,30 @@
   <script src="js/no-js.js"></script>
 </head>
 <body>
+  <!-- Schermata di caricamento: copre il sito finché i fotogrammi del video non sono pronti
+       (la gestisce js/scroll-video.js; senza JavaScript non compare) -->
+  <div class="loader" id="site-loader" role="progressbar" aria-label="Caricamento del sito" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+    <div class="loader__mark" aria-hidden="true">
+      <div class="loader__ring">
+        <svg viewBox="0 0 112 112">
+          <defs>
+            <radialGradient id="loader-disc" cx="50%" cy="50%" r="50%">
+              <stop offset="0" stop-color="#04112b" stop-opacity="0.9"/>
+              <stop offset="0.75" stop-color="#0d3478" stop-opacity="0.55"/>
+              <stop offset="1" stop-color="#a9dcff" stop-opacity="0.45"/>
+            </radialGradient>
+          </defs>
+          <circle class="loader__disc" cx="56" cy="56" r="46" fill="url(#loader-disc)"/>
+          <!-- Due mezzi anelli dal basso verso l'alto: il cerchio si ridisegna da entrambi i lati -->
+          <path class="loader__arc" pathLength="1" d="M56 102 A46 46 0 0 1 56 10"/>
+          <path class="loader__arc" pathLength="1" d="M56 102 A46 46 0 0 0 56 10"/>
+        </svg>
+      </div>
+      <span class="loader__drop"></span>
+    </div>
+    <p class="loader__label">Caricamento <span data-loader-value>0</span>%</p>
+  </div>
+
   <a class="skip-link" href="#scene-hero" data-scene-link="hero">Salta al contenuto</a>
 
   <!-- Header: compare insieme alla hero (come nella foto 2) e poi resta fisso -->
@@ -250,10 +274,6 @@
             <a href="cookie.html">Cookie</a>
           </footer>
         </section>
-
-        <div class="scroll-video__loader" id="scroll-video-loader" role="progressbar" aria-label="Caricamento del video" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-          <span class="scroll-video__loader-bar"></span>
-        </div>
       </div>
     </section>
   </main>
