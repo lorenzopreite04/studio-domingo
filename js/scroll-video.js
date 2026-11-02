@@ -104,7 +104,6 @@
 
   const timeline = buildTimeline();
   section.style.setProperty('--scroll-distance', `${timeline.length}vh`);
-
   // Tempo del video normalizzato (0..1) a una posizione della timeline: fermo durante
   // le pause, interpolato linearmente tra una keyframe e l'altra
   function posToTime(pos) {
@@ -311,9 +310,15 @@
   const easeInOutCubic = (p) => (p < 0.5 ? 4 * p * p * p : 1 - (-2 * p + 2) ** 3 / 2);
   let scrollAnimId = null;
 
+  // Sui telefoni, durante l'animazione, lo scroll a mano è bloccato (html.is-gliding): così
+  // l'inerzia dello swipe appena fatto non la contrasta. Su desktop no, perché nascondere la
+  // barra di scorrimento sposterebbe la pagina.
+  const glideLock = (on) => document.documentElement.classList.toggle('is-gliding', on);
+
   function cancelScrollAnimation() {
     if (scrollAnimId !== null) cancelAnimationFrame(scrollAnimId);
     scrollAnimId = null;
+    glideLock(false);
   }
 
   function animateScrollTo(top, instant = reducedMotion) {
@@ -327,10 +332,12 @@
     // Circa 0,45 s per schermata, tra 1 e 3 secondi
     const duration = Math.min(Math.max((Math.abs(distance) / window.innerHeight) * 450, 1000), 3000);
     const start = performance.now();
+    glideLock(mobileMedia.matches);
     const step = (now) => {
       const p = Math.min((now - start) / duration, 1);
       window.scrollTo(0, from + distance * easeInOutCubic(p));
-      scrollAnimId = p < 1 ? requestAnimationFrame(step) : null;
+      if (p < 1) scrollAnimId = requestAnimationFrame(step);
+      else cancelScrollAnimation();
     };
     scrollAnimId = requestAnimationFrame(step);
   }
@@ -340,12 +347,48 @@
     window.addEventListener(type, cancelScrollAnimation, { passive: true })
   );
 
-  // Scroll della pagina fino a metà della pausa di una scena
+  // Punto di scroll di una scena: a metà della sua pausa (il benvenuto in cima alla pagina)
+  const keyTop = (k) => geometry.top + (k === timeline.keys[0] ? 0 : (k.start + k.hold / 2) * geometry.pxPerUnit);
+
   function scrollToKey(id, instant) {
     const k = timeline.keys.find((key) => key.id === id);
-    if (!k) return;
-    animateScrollTo(geometry.top + (k.start + k.hold / 2) * geometry.pxPerUnit, instant);
+    if (k) animateScrollTo(keyTop(k), instant);
   }
+
+  // --- Telefoni: una sezione per gesto ----------------------------------------
+  // Mentre il dito è appoggiato il video lo segue come sempre; al rilascio la pagina
+  // scivola fino alla sezione successiva o precedente, o torna a quella di partenza se il
+  // gesto è stato minimo. Così non si resta mai a metà strada tra due sezioni.
+  const SWIPE_THRESHOLD = 30; // px
+  let touchStartY = null;
+  let touchStartKey = 0;
+
+  const nearestKey = (y) =>
+    timeline.keys.reduce((best, k, i) => (Math.abs(keyTop(k) - y) < Math.abs(keyTop(timeline.keys[best]) - y) ? i : best), 0);
+
+  window.addEventListener('touchstart', (e) => {
+    touchStartY = mobileMedia.matches && e.touches.length === 1 ? window.scrollY : null;
+    if (touchStartY !== null) touchStartKey = nearestKey(touchStartY);
+  }, { passive: true });
+
+  function onTouchEnd(e) {
+    if (touchStartY === null || e.touches.length) return;
+    const delta = window.scrollY - touchStartY;
+    touchStartY = null;
+    // Menu o modulo aperti, o schermata di caricamento: la pagina sotto è ferma
+    const root = document.documentElement;
+    if (root.classList.contains('is-locked') || root.classList.contains('is-loading')) return;
+
+    let target = touchStartKey;
+    if (delta > SWIPE_THRESHOLD) target += 1;
+    else if (delta < -SWIPE_THRESHOLD) target -= 1;
+    target = Math.min(Math.max(target, 0), timeline.keys.length - 1);
+    const top = keyTop(timeline.keys[target]);
+    if (Math.abs(window.scrollY - top) > 1) animateScrollTo(top);
+  }
+
+  window.addEventListener('touchend', onTouchEnd, { passive: true });
+  window.addEventListener('touchcancel', onTouchEnd, { passive: true });
 
   // Chi preferisce meno animazioni ottiene l'aggancio diretto, senza inerzia
   if (reducedMotion) CONFIG.smoothing = 1;

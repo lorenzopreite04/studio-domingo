@@ -78,7 +78,8 @@
     }
   }
 
-  const nextKey = (pos) => SV.keys.find((k) => k.start + k.hold / 2 > pos + 1);
+  // Prima scena il cui punto di arrivo (metà della pausa; il benvenuto in cima) è più avanti
+  const nextKey = (pos) => SV.keys.find((k, i) => (i === 0 ? 0 : k.start + k.hold / 2) > pos + 1);
 
   nextBtn.addEventListener('click', () => {
     const next = nextKey(currentPos);

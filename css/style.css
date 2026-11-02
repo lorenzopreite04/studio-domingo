@@ -43,8 +43,11 @@ html {
   text-size-adjust: 100%;
 }
 
+/* is-gliding: sui telefoni, mentre la pagina scivola da una sezione all'altra (js/scroll-video.js);
+   ferma anche l'inerzia dello swipe, che altrimenti contrasterebbe lo scorrimento animato */
 html.is-locked,
-html.is-loading {
+html.is-loading,
+html.is-gliding {
   overflow: hidden;
 }
 
