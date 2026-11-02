@@ -313,7 +313,10 @@
   // Sui telefoni, durante l'animazione, lo scroll a mano è bloccato (html.is-gliding): così
   // l'inerzia dello swipe appena fatto non la contrasta. Su desktop no, perché nascondere la
   // barra di scorrimento sposterebbe la pagina.
-  const glideLock = (on) => document.documentElement.classList.toggle('is-gliding', on);
+  // Il blocco richiede `overflow-x: clip` sul body (vedi style.css): i browser che non lo
+  // conoscono (iOS 15 e precedenti) perderebbero il video "sticky", quindi lì si salta
+  const canGlideLock = CSS.supports('overflow-x', 'clip');
+  const glideLock = (on) => document.documentElement.classList.toggle('is-gliding', on && canGlideLock);
 
   function cancelScrollAnimation() {
     if (scrollAnimId !== null) cancelAnimationFrame(scrollAnimId);

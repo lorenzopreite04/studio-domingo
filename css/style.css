@@ -61,7 +61,12 @@ body {
   background: var(--bg);
   color: var(--white);
   font-family: var(--font-body);
+  /* clip e non hidden: hidden trasforma il body in un contenitore scorrevole appena html ha
+     overflow: hidden (menu aperto, caricamento, scivolamento tra sezioni) e il video
+     "sticky" scorrerebbe via con la pagina lasciando solo il fondo blu.
+     hidden resta solo per i browser che non conoscono clip */
   overflow-x: hidden;
+  overflow-x: clip;
   /* Evita il "rimbalzo" che su iOS/Android scopre il fondo sotto al canvas */
   overscroll-behavior-y: none;
   -webkit-font-smoothing: antialiased;
