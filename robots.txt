@@ -1,0 +1,5 @@
+# DA PERSONALIZZARE: sostituire https://www.esempio.it con il dominio reale
+User-agent: *
+Allow: /
+
+Sitemap: https://www.esempio.it/sitemap.xml

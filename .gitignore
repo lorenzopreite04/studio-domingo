@@ -1,0 +1,23 @@
+# Local preview server and editor settings (not part of the site)
+.claude/
+.vscode/
+.idea/
+
+# Source video (12 MB): stays on this computer, the site only uses assets/frames
+_sorgenti/
+
+# Build output
+.vercel/
+
+# Secrets: only the example file may be committed
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# Operating system files
+Thumbs.db
+desktop.ini
+.DS_Store

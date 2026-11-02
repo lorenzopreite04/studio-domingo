@@ -1,0 +1,129 @@
+/* Pagine di solo testo (privacy, cookie, 404): usa i colori e i font di style.css */
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(120% 80% at 100% 0%, #0b3a8a 0%, transparent 60%),
+    linear-gradient(180deg, #1f6fc0 0%, #6db6ea 100%);
+  background-attachment: fixed;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: max(1rem, env(safe-area-inset-top)) max(1.25rem, env(safe-area-inset-right)) 1rem max(1.25rem, env(safe-area-inset-left));
+}
+
+.page-header .logo {
+  font-size: clamp(20px, 2.2vw, 32px);
+}
+
+.page-back {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.page-back:hover {
+  text-decoration: underline;
+}
+
+.page-main {
+  flex: 1;
+  width: min(820px, 100% - 2rem);
+  margin: 1rem auto 3rem;
+}
+
+.prose {
+  padding: clamp(1.5rem, 4vw, 3rem);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--ink);
+  line-height: 1.65;
+  box-shadow: 0 30px 60px -30px rgba(5, 20, 45, 0.6);
+}
+
+.prose h1 {
+  margin-bottom: 0.4em;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2rem, 6vw, 3.4rem);
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--navy);
+}
+
+.prose h2 {
+  margin: 1.8em 0 0.5em;
+  font-size: 1.15rem;
+  color: var(--navy);
+}
+
+.prose p,
+.prose ul {
+  margin: 0 0 1em;
+}
+
+.prose ul {
+  padding-left: 1.3em;
+  list-style: disc;
+}
+
+.prose a {
+  color: var(--navy);
+  font-weight: 600;
+}
+
+.prose .draft-note {
+  padding: 0.9rem 1.1rem;
+  border-radius: 12px;
+  background: #fff4d6;
+  color: #6b4d00;
+  font-size: 0.92rem;
+}
+
+.prose .updated {
+  font-size: 0.9rem;
+  opacity: 0.7;
+}
+
+.page-footer {
+  padding: 1.5rem 1.25rem max(1.5rem, env(safe-area-inset-bottom));
+  font-size: 13px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.page-footer a {
+  margin: 0 0.6em;
+}
+
+/* 404 */
+.not-found {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 1.2rem;
+  text-align: center;
+}
+
+.not-found__code {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(6rem, 28vw, 16rem);
+  line-height: 0.9;
+  background: var(--title-light);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 4px 18px rgba(6, 28, 74, 0.4));
+}
+
+.not-found p:not(.not-found__code) {
+  max-width: 32ch;
+  font-size: 1.1rem;
+  line-height: 1.5;
+}

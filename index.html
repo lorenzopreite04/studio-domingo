@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="it" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2f74b5">
+  <title>Studio Dentistico Domingo · Dentista a Città</title>
+  <meta name="description" content="Studio Dentistico Domingo a Città: prevenzione, estetica dentale, ortodonzia e implantologia. Prima visita e preventivo gratuiti. Prenota online.">
+  <!-- Sito dimostrativo con dati inventati: fuori dai risultati di Google. Togliere quando
+       diventa il sito di uno studio reale (e togliere X-Robots-Tag in vercel.json) -->
+  <meta name="robots" content="noindex">
+
+  <!-- DA PERSONALIZZARE: sostituire https://www.esempio.it con il dominio reale (anche in robots.txt e sitemap.xml) -->
+  <link rel="canonical" href="https://www.esempio.it/">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="it_IT">
+  <meta property="og:site_name" content="Studio Dentistico Domingo">
+  <meta property="og:title" content="Studio Dentistico Domingo">
+  <meta property="og:description" content="Prevenzione, estetica dentale, ortodonzia e implantologia. Prima visita gratuita.">
+  <meta property="og:url" content="https://www.esempio.it/">
+  <meta property="og:image" content="https://www.esempio.it/assets/og-image.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+  <!-- Dati strutturati per Google (scheda "Dentista" nei risultati e su Maps) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Dentist",
+    "name": "Studio Dentistico Domingo",
+    "url": "https://www.esempio.it/",
+    "image": "https://www.esempio.it/assets/og-image.jpg",
+    "telephone": "+390000000000",
+    "email": "info@studiodomingo.example",
+    "priceRange": "€€",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Via Esempio 1",
+      "postalCode": "00000",
+      "addressLocality": "Città",
+      "addressCountry": "IT"
+    },
+    "openingHoursSpecification": [
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "opens": "09:00",
+        "closes": "19:00"
+      },
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": "Saturday",
+        "opens": "09:00",
+        "closes": "13:00"
+      }
+    ]
+  }
+  </script>
+
+  <!-- Primo frame del set giusto: stessa soglia di mobileQuery in js/scroll-video.js -->
+  <link rel="preload" as="image" href="assets/frames/mobile/frame_0001.webp" media="(orientation: portrait) and (max-width: 900px)">
+  <link rel="preload" as="image" href="assets/frames/desktop/frame_0001.webp" media="not all and (orientation: portrait) and (max-width: 900px)">
+  <link rel="preload" as="font" href="assets/fonts/archivo-latin.woff2" type="font/woff2" crossorigin>
+  <link rel="preload" as="font" href="assets/fonts/figtree-latin.woff2" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/fonts.css">
+  <link rel="stylesheet" href="css/style.css">
+  <!-- Senza JavaScript la pagina mostra le sezioni una sotto l'altra (vedi .no-js in style.css).
+       File esterno e non inline: la Content-Security-Policy in vercel.json blocca gli script inline -->
+  <script src="js/no-js.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#scene-hero" data-scene-link="hero">Salta al contenuto</a>
+
+  <!-- Header: compare insieme alla hero (come nella foto 2) e poi resta fisso -->
+  <header class="site-header" id="site-header">
+    <a class="logo" href="#top" data-scene-link="intro">Domingo</a>
+
+    <nav class="nav" aria-label="Principale">
+      <ul class="nav__list">
+        <li><a class="nav__link" href="#scene-about" data-scene-link="about">Chi siamo</a></li>
+        <li><a class="nav__link" href="#scene-services" data-scene-link="services">Servizi</a></li>
+        <li><a class="nav__link" href="#scene-contact" data-scene-link="contact">Contatti</a></li>
+      </ul>
+    </nav>
+
+    <div class="site-header__actions">
+      <button class="header-cta" type="button" data-dialog-open="dialog-booking">Prenota</button>
+      <button class="header-btn menu-btn" type="button" data-dialog-open="dialog-menu" aria-label="Apri il menu">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16M4 16h16"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="top">
+    <!-- Sezione che "guida" il video: la sua altezza (calcolata in JS dalla timeline)
+         decide quanto scroll serve per arrivare all'ultimo frame -->
+    <section class="scroll-video" id="scroll-video" aria-label="Studio Dentistico Domingo">
+      <div class="scroll-video__sticky">
+        <canvas class="scroll-video__canvas" id="scroll-video-canvas" aria-hidden="true"></canvas>
+
+        <!-- Benvenuto · frame 0 (foto 1) -->
+        <section class="scene scene--intro" id="scene-intro" data-scene="intro" aria-label="Benvenuti">
+          <h1 class="intro__title">Benvenuti</h1>
+          <button class="scroll-cue" type="button" data-scene-link="hero">
+            <span>Scorri</span>
+            <span class="scroll-cue__line" aria-hidden="true"></span>
+          </button>
+        </section>
+
+        <!-- 1 · Hero · frame 82 (foto 2) -->
+        <section class="scene scene--hero" id="scene-hero" data-scene="hero" aria-labelledby="hero-title">
+          <div class="hero__heading">
+            <h2 class="scene__title" id="hero-title">Esempio</h2>
+            <span class="hero__dash" aria-hidden="true"></span>
+          </div>
+
+          <!-- Su desktop il wrapper "sparisce" (display: contents) e testo e prenotazione
+               si posizionano come in foto; su mobile diventano un unico pannello in basso -->
+          <div class="hero__body">
+            <p class="hero__lead">Lo Studio Dentistico Domingo si prende cura del tuo sorriso con tecnologie moderne, un team esperto e un ambiente sereno.</p>
+
+            <div class="hero__cta">
+              <p class="hero__cta-kicker">Prima visita gratuita</p>
+              <p class="hero__cta-text">Controllo completo e preventivo chiaro, senza impegno.</p>
+              <button class="btn btn--ink btn--block" type="button" data-dialog-open="dialog-booking">Prenota una visita</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2 · Chi siamo · frame 278 (foto 3): contenuti nella metà destra, libera -->
+        <section class="scene scene--about scene--right" id="scene-about" data-scene="about" aria-labelledby="about-title">
+          <h2 class="scene__title" id="about-title">Chi siamo</h2>
+
+          <div class="scene__panel">
+            <p class="scene__lead">Dal 2010 siamo uno studio a conduzione familiare: odontoiatri e igienisti che lavorano insieme e ti spiegano ogni cura con chiarezza, senza sorprese sui costi.</p>
+
+            <ul class="stats" role="list">
+              <li class="stat"><strong class="stat__value">15+</strong><span class="stat__label">anni di esperienza</span></li>
+              <li class="stat"><strong class="stat__value">6</strong><span class="stat__label">specialisti</span></li>
+              <li class="stat"><strong class="stat__value">4.000+</strong><span class="stat__label">pazienti seguiti</span></li>
+            </ul>
+
+            <div class="why">
+              <h3 class="why__title">Perché sceglierci</h3>
+              <ul class="check-list">
+                <li>Prima visita e preventivo gratuiti</li>
+                <li>Radiografie digitali a basse radiazioni</li>
+                <li>Pagamenti rateizzati senza interessi</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3 · Servizi · frame 401 (foto 4): contenuti nella metà sinistra, libera -->
+        <section class="scene scene--services scene--left" id="scene-services" data-scene="services" aria-labelledby="services-title">
+          <h2 class="scene__title" id="services-title">Servizi</h2>
+
+          <div class="scene__panel">
+            <p class="scene__lead">Dalla prevenzione all'implantologia: tutte le cure per il tuo sorriso, in un unico studio.</p>
+
+            <div class="tabs card" data-tabs>
+              <div class="tabs__list" role="tablist" aria-label="Trattamenti">
+                <button class="tabs__tab" type="button" role="tab" id="tab-prevention" aria-controls="panel-prevention" aria-selected="true">Prevenzione</button>
+                <button class="tabs__tab" type="button" role="tab" id="tab-aesthetic" aria-controls="panel-aesthetic" aria-selected="false" tabindex="-1">Estetica</button>
+                <button class="tabs__tab" type="button" role="tab" id="tab-ortho" aria-controls="panel-ortho" aria-selected="false" tabindex="-1">Ortodonzia</button>
+                <button class="tabs__tab" type="button" role="tab" id="tab-implant" aria-controls="panel-implant" aria-selected="false" tabindex="-1">Implantologia</button>
+              </div>
+
+              <div class="tabs__panel" role="tabpanel" id="panel-prevention" aria-labelledby="tab-prevention">
+                <p class="tabs__notes">Igiene professionale · Sigillature · Controlli</p>
+                <p>Pulizia professionale e controlli periodici per fermare carie e gengiviti prima che inizino.</p>
+                <div class="book-row">
+                  <span class="book-row__meta">Seduta di 45 minuti</span>
+                  <button class="btn btn--ink" type="button" data-dialog-open="dialog-booking" data-treatment="Igiene e prevenzione">Prenota</button>
+                </div>
+              </div>
+              <div class="tabs__panel" role="tabpanel" id="panel-aesthetic" aria-labelledby="tab-aesthetic" hidden>
+                <p class="tabs__notes">Sbiancamento · Faccette</p>
+                <p>Sbiancamento professionale e faccette su misura per un sorriso più luminoso, nel rispetto dello smalto.</p>
+                <div class="book-row">
+                  <span class="book-row__meta">Valutazione gratuita</span>
+                  <button class="btn btn--ink" type="button" data-dialog-open="dialog-booking" data-treatment="Estetica dentale">Prenota</button>
+                </div>
+              </div>
+              <div class="tabs__panel" role="tabpanel" id="panel-ortho" aria-labelledby="tab-ortho" hidden>
+                <p class="tabs__notes">Allineatori trasparenti · Apparecchi</p>
+                <p>Allineatori invisibili e apparecchi tradizionali per raddrizzare i denti, per adulti e bambini.</p>
+                <div class="book-row">
+                  <span class="book-row__meta">Scansione 3D inclusa</span>
+                  <button class="btn btn--ink" type="button" data-dialog-open="dialog-booking" data-treatment="Ortodonzia">Prenota</button>
+                </div>
+              </div>
+              <div class="tabs__panel" role="tabpanel" id="panel-implant" aria-labelledby="tab-implant" hidden>
+                <p class="tabs__notes">Impianti · Protesi fisse</p>
+                <p>Impianti in titanio e protesi fisse per tornare a masticare e sorridere con sicurezza.</p>
+                <div class="book-row">
+                  <span class="book-row__meta">Piano di cura personalizzato</span>
+                  <button class="btn btn--ink" type="button" data-dialog-open="dialog-booking" data-treatment="Implantologia">Prenota</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4 · Contatti · frame 552, ultimo (foto 5): contenuti nella metà destra, libera -->
+        <section class="scene scene--contact scene--right" id="scene-contact" data-scene="contact" aria-labelledby="contact-title">
+          <h2 class="scene__title" id="contact-title">Contatti</h2>
+
+          <div class="scene__panel">
+            <p class="scene__lead">Siamo qui per te dal lunedì al sabato. Chiamaci o prenota online: ti ricontattiamo entro un giorno lavorativo.</p>
+
+            <dl class="contact-list">
+              <div class="contact-list__row">
+                <dt>Indirizzo</dt>
+                <dd>Via Esempio 1, 00000 Città</dd>
+              </div>
+              <div class="contact-list__row">
+                <dt>Telefono</dt>
+                <dd><a href="tel:+390000000000">+39 000 000 0000</a></dd>
+              </div>
+              <div class="contact-list__row">
+                <dt>Email</dt>
+                <dd><a href="mailto:info@studiodomingo.example">info@studiodomingo.example</a></dd>
+              </div>
+              <div class="contact-list__row">
+                <dt>Orari</dt>
+                <dd>Lun – Ven 9:00 – 19:00 · Sab 9:00 – 13:00</dd>
+              </div>
+            </dl>
+
+            <div class="contact__actions">
+              <button class="btn btn--light" type="button" data-dialog-open="dialog-booking">Prenota una visita</button>
+              <a class="btn btn--ghost" href="tel:+390000000000">Chiama lo studio</a>
+              <a class="btn btn--ghost" href="https://www.google.com/maps/search/?api=1&amp;query=Via%20Esempio%201%2C%2000000%20Citt%C3%A0" target="_blank" rel="noopener">Indicazioni</a>
+            </div>
+          </div>
+
+          <!-- Dati richiesti nella comunicazione sanitaria (direttore sanitario e iscrizione all'Albo):
+               verificare i requisiti esatti con l'Ordine dei Medici e Odontoiatri di riferimento -->
+
+          <footer class="site-footer">
+            <span>© 2026 Studio Dentistico Domingo · P.IVA 00000000000</span>
+            <span>Direttore Sanitario: Dott. Nome Cognome · Iscr. Albo Odontoiatri di Città n. 0000</span>
+            <a href="privacy.html">Privacy</a>
+            <a href="cookie.html">Cookie</a>
+          </footer>
+        </section>
+
+        <div class="scroll-video__loader" id="scroll-video-loader" role="progressbar" aria-label="Caricamento del video" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <span class="scroll-video__loader-bar"></span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Pulsante rotondo in basso a destra (foto 2): va alla sezione successiva, l'anello mostra l'avanzamento -->
+  <button class="next-btn" type="button" id="next-btn" aria-label="Sezione successiva">
+    <svg class="next-btn__ring" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22"/></svg>
+    <svg class="next-btn__arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+  </button>
+
+  <!-- Menu mobile -->
+  <dialog class="dialog dialog--menu" id="dialog-menu" aria-label="Menu">
+    <div class="dialog__head">
+      <span class="logo">Domingo</span>
+      <button class="header-btn" type="button" data-dialog-close aria-label="Chiudi il menu">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <nav aria-label="Menu mobile">
+      <ul class="menu__list">
+        <li><a class="menu__link" href="#scene-about" data-scene-link="about">Chi siamo</a></li>
+        <li><a class="menu__link" href="#scene-services" data-scene-link="services">Servizi</a></li>
+        <li><a class="menu__link" href="#scene-contact" data-scene-link="contact">Contatti</a></li>
+      </ul>
+    </nav>
+    <button class="btn btn--light btn--block menu__cta" type="button" data-dialog-open="dialog-booking">Prenota una visita</button>
+  </dialog>
+
+  <!-- Prenotazione visita -->
+  <dialog class="dialog dialog--drawer" id="dialog-booking" aria-labelledby="booking-title">
+    <div class="dialog__head">
+      <h2 class="dialog__title" id="booking-title">Prenota una visita</h2>
+      <button class="header-btn" type="button" data-dialog-close aria-label="Chiudi la prenotazione">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <form class="form" data-booking-form>
+      <p class="form__intro">Lasciaci i tuoi dati: ti richiamiamo entro un giorno lavorativo per confermare data e ora.</p>
+      <label class="field">
+        <span class="field__label">Nome e cognome</span>
+        <input class="field__input" type="text" name="name" autocomplete="name" required>
+      </label>
+      <div class="field-row">
+        <label class="field">
+          <span class="field__label">Telefono</span>
+          <input class="field__input" type="tel" name="phone" autocomplete="tel" required>
+        </label>
+        <label class="field">
+          <span class="field__label">Email</span>
+          <input class="field__input" type="email" name="email" autocomplete="email" required>
+        </label>
+      </div>
+      <label class="field">
+        <span class="field__label">Motivo della visita</span>
+        <select class="field__input" name="treatment" required>
+          <option>Prima visita gratuita</option>
+          <option>Igiene e prevenzione</option>
+          <option>Estetica dentale</option>
+          <option>Ortodonzia</option>
+          <option>Implantologia</option>
+          <option>Urgenza / dolore</option>
+        </select>
+      </label>
+      <div class="field-row">
+        <label class="field">
+          <span class="field__label">Data preferita</span>
+          <input class="field__input" type="date" name="date" required data-min-today>
+        </label>
+        <label class="field">
+          <span class="field__label">Fascia oraria</span>
+          <select class="field__input" name="time" required>
+            <option>Mattina</option>
+            <option>Pomeriggio</option>
+            <option>Sera (dopo le 17)</option>
+          </select>
+        </label>
+      </div>
+      <label class="consent">
+        <input type="checkbox" name="consenso_privacy" value="sì" required>
+        <span>Ho letto l'<a href="privacy.html" target="_blank" rel="noopener">informativa privacy</a> e acconsento al trattamento dei miei dati per essere ricontattato.</span>
+      </label>
+      <!-- Campo trappola anti-spam: nascosto alle persone, i bot lo compilano e la richiesta viene scartata -->
+      <div class="visually-hidden" aria-hidden="true">
+        <label>Non compilare questo campo <input type="text" name="_gotcha" tabindex="-1" autocomplete="off"></label>
+      </div>
+      <button class="btn btn--ink btn--block" type="submit">Invia la richiesta</button>
+      <p class="form__status" data-form-status role="status"></p>
+      <p class="form__note">Per urgenze chiamaci al <a href="tel:+390000000000">+39 000 000 0000</a>.</p>
+    </form>
+  </dialog>
+
+  <script src="js/scroll-video.js"></script>
+  <script src="js/site.js"></script>
+</body>
+</html>

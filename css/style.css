@@ -1,0 +1,1402 @@
+/*
+ * Le misure desktop sono ricavate dalle foto di riferimento (2000x1124):
+ * orizzontali e font in vw, verticali in % dell'altezza dello schermo,
+ * così i testi restano agganciati agli oggetti del video come in foto.
+ */
+:root {
+  /* Palette presa dal video: blu profondi, azzurri e bianchi */
+  --white: #fff;
+  --ice: #eaf6ff;
+  --sky: #a9dcff;
+  --azure: #2f8fe0;
+  --navy: #0a2a66;
+  --ink: #0b1b30;
+  --glass-light: rgba(255, 255, 255, 0.78);
+  --glass-dark: rgba(6, 28, 74, 0.62);
+  --line-ink: rgba(11, 27, 48, 0.2);
+  --line-white: rgba(255, 255, 255, 0.35);
+
+  /* Titoli: bianco che sfuma in azzurro sui fondi scuri, blu notte sui fondi chiari */
+  --title-light: linear-gradient(180deg, var(--white) 20%, var(--sky) 100%);
+  --title-dark: var(--navy);
+
+  /* Colore di fondo preso dal video, visibile prima che il primo frame sia pronto */
+  --bg: #2f74b5;
+  --loader: rgba(255, 255, 255, 0.85);
+  --loader-height: 3px;
+
+  --font-display: 'Archivo', 'Arial Black', system-ui, sans-serif;
+  --font-body: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --gutter: 1.25vw;
+  --header-h: clamp(48px, 4.8vw, 96px);
+  --radius: 18px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+html.is-locked {
+  overflow: hidden;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--white);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  /* Evita il "rimbalzo" che su iOS/Android scopre il fondo sotto al canvas */
+  overscroll-behavior-y: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, p, ul, dl {
+  margin: 0;
+  padding: 0;
+}
+
+ul {
+  list-style: none;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  background: none;
+  border: 0;
+  padding: 0;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--sky);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.skip-link {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  z-index: 100;
+  padding: 0.6rem 1rem;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--white);
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: none;
+}
+
+.icon {
+  width: 1.4em;
+  height: 1.4em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* --- Scroll video ----------------------------------------------------------- */
+
+.scroll-video {
+  position: relative;
+  /* --scroll-distance viene impostata da js/scroll-video.js in base alla timeline */
+  height: calc(var(--scroll-distance, 700vh) + 100vh);
+  height: calc(var(--scroll-distance, 700vh) + 100lvh);
+}
+
+/*
+ * 100lvh = altezza con barra degli indirizzi nascosta: il canvas non cambia
+ * dimensione mentre la barra compare/scompare (niente scatti né bande vuote).
+ * 100vh resta come fallback per i browser che non supportano le unità lvh.
+ */
+.scroll-video__sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100lvh;
+  width: 100%;
+  overflow: hidden;
+}
+
+.scroll-video__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.scroll-video__loader {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: var(--loader-height);
+  z-index: 60;
+  transition: opacity 0.6s ease;
+}
+
+.scroll-video__loader-bar {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: var(--loader);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.2s linear;
+}
+
+.scroll-video__loader.is-done {
+  opacity: 0;
+}
+
+/* --- Header ----------------------------------------------------------------- */
+
+.site-header {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 20;
+  height: var(--header-h);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 0 var(--gutter);
+  padding-top: env(safe-area-inset-top);
+  /* Opacità e spostamento li gestisce js/site.js in base allo scroll */
+  opacity: 0;
+  visibility: hidden;
+}
+
+.logo {
+  justify-self: start;
+  font-family: var(--font-display);
+  font-stretch: 62%;
+  font-weight: 700;
+  font-size: clamp(18px, 2.2vw, 45px);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--white);
+}
+
+.nav__list {
+  display: flex;
+  gap: 3.4vw;
+}
+
+.nav__link {
+  position: relative;
+  display: inline-block;
+  padding: 0.35em 0;
+  font-size: clamp(12px, 1.28vw, 26px);
+  font-weight: 600;
+  text-decoration: none;
+  letter-spacing: -0.01em;
+}
+
+.nav__link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.15em;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s var(--ease);
+}
+
+.nav__link:hover::after,
+.nav__link[aria-current='true']::after {
+  transform: scaleX(1);
+}
+
+.site-header__actions {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 1.9vw;
+}
+
+.header-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  color: var(--white);
+  transition: opacity 0.2s ease;
+}
+
+.header-btn:hover {
+  opacity: 0.75;
+}
+
+.header-cta {
+  min-height: 36px;
+  padding: 0.55em 1.4em;
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--navy);
+  font-size: clamp(12px, 1.1vw, 22px);
+  font-weight: 700;
+  transition: background-color 0.25s ease, transform 0.25s var(--ease);
+}
+
+.header-cta:hover {
+  background: var(--sky);
+  transform: translateY(-1px);
+}
+
+.menu-btn {
+  display: none;
+}
+
+/* --- Scene (comuni) ------------------------------------------------------------ */
+
+.scene {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  /* Opacità, spostamento e visibilità li gestisce js/site.js in base allo scroll */
+  opacity: 0;
+  visibility: hidden;
+  will-change: opacity, transform;
+}
+
+.scene:not(.is-active) {
+  pointer-events: none;
+}
+
+.scene__title,
+.intro__title {
+  display: block;
+  font-family: var(--font-display);
+  font-stretch: 100%;
+  font-weight: 800;
+  line-height: 0.85;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  background: var(--title-light);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  /* Ombra blu morbida: stacca il titolo chiaro anche dagli oggetti bianchi del video */
+  filter: drop-shadow(0 4px 18px rgba(6, 28, 74, 0.4));
+}
+
+.scene__title {
+  font-size: var(--title-size, 10vw);
+}
+
+/* Su fondo chiaro (chi siamo) e sopra al dente bianco (hero) il titolo è blu notte */
+.scene--hero .scene__title,
+.scene--about .scene__title {
+  background: none;
+  color: var(--title-dark);
+  filter: none;
+}
+
+.scene__lead {
+  font-size: clamp(15px, 1.35vw, 26px);
+  line-height: 1.45;
+  font-weight: 500;
+  color: var(--fg, var(--white));
+}
+
+/* Bottoni */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  min-height: 46px;
+  padding: 0.75em 1.5em;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: clamp(14px, 0.95vw, 18px);
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  transition: transform 0.25s var(--ease), background-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px -12px rgba(5, 20, 45, 0.6);
+}
+
+.btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.btn--ink {
+  background: var(--navy);
+  color: var(--white);
+}
+
+.btn--ink:hover {
+  background: var(--azure);
+}
+
+.btn--light {
+  background: var(--white);
+  color: var(--navy);
+}
+
+.btn--light:hover {
+  background: var(--sky);
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--white);
+  box-shadow: inset 0 0 0 1.5px var(--line-white);
+}
+
+.btn--ghost:hover {
+  box-shadow: inset 0 0 0 1.5px var(--white);
+}
+
+.btn--block {
+  width: 100%;
+}
+
+/* Pannello chiaro sfocato: tiene leggibili i testi sopra un video pieno di dettagli */
+.card {
+  border-radius: var(--radius);
+  background: var(--glass-light);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 18px 40px -24px rgba(5, 20, 45, 0.55);
+  color: var(--ink);
+}
+
+.check-list li {
+  position: relative;
+  padding-left: 1.5em;
+}
+
+.check-list li + li {
+  margin-top: 0.4em;
+}
+
+.check-list li::before {
+  content: '';
+  position: absolute;
+  left: 0.15em;
+  top: 0.45em;
+  width: 0.55em;
+  height: 0.3em;
+  border-left: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+}
+
+/* --- Benvenuto (foto 1) ------------------------------------------------------------ */
+
+.scene--intro {
+  display: grid;
+  place-items: center;
+}
+
+.intro__title {
+  font-size: 9.6vw;
+  line-height: 1;
+}
+
+.scroll-cue {
+  position: absolute;
+  left: 50%;
+  bottom: max(3vh, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.scroll-cue__line {
+  position: relative;
+  width: 1.5px;
+  height: 44px;
+  overflow: hidden;
+  background: var(--line-white);
+}
+
+.scroll-cue__line::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--white);
+  animation: cue 1.8s var(--ease) infinite;
+}
+
+@keyframes cue {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+/* --- 1 · Hero (posizioni dalla foto 2) ---------------------------------------------- */
+
+.scene--hero {
+  /* ESEMPIO ha 7 lettere: un po' più piccolo per occupare la stessa larghezza della foto */
+  --title-size: 10vw;
+}
+
+.hero__heading {
+  position: absolute;
+  left: 8%;
+  top: 35%;
+}
+
+.hero__dash {
+  position: absolute;
+  left: 0.75vw;
+  bottom: -1.4vw;
+  width: 2.3vw;
+  height: 3px;
+  background: var(--white);
+}
+
+.hero__body {
+  display: contents;
+}
+
+.hero__lead,
+.hero__cta {
+  position: absolute;
+  border-radius: var(--radius);
+  background: var(--glass-light);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 18px 40px -24px rgba(5, 20, 45, 0.55);
+  color: var(--ink);
+}
+
+.hero__lead {
+  left: 8%;
+  top: 60%;
+  width: 32vw;
+  padding: 1.1em 1.4em;
+  font-size: clamp(14px, 1.4vw, 28px);
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+/* Al posto dell'accordion della foto 2: il pulsante di prenotazione */
+.hero__cta {
+  left: 71%;
+  right: 3.2%;
+  top: 47%;
+  display: grid;
+  gap: 0.7em;
+  padding: 1.4em;
+}
+
+.hero__cta-kicker {
+  font-family: var(--font-display);
+  font-stretch: 112%;
+  font-weight: 800;
+  font-size: clamp(16px, 1.5vw, 30px);
+  line-height: 1.1;
+  text-transform: uppercase;
+  color: var(--navy);
+}
+
+.hero__cta-text {
+  font-size: clamp(13px, 1vw, 19px);
+  line-height: 1.45;
+  font-weight: 500;
+}
+
+.hero__cta .btn {
+  margin-top: 0.3em;
+}
+
+/* --- Sezioni con contenuti in una metà (chi siamo, servizi, contatti) ------------------- */
+
+.scene--left,
+.scene--right {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3vh;
+  padding: calc(var(--header-h) + 2vh) 4vw 6vh;
+}
+
+.scene--right > :not(.site-footer) {
+  margin-left: 50%;
+  width: 44%;
+}
+
+.scene--left > :not(.site-footer) {
+  margin-left: 4%;
+  width: 40%;
+}
+
+.scene__panel {
+  display: grid;
+  gap: 2.4vh;
+}
+
+/* 2 · Chi siamo: lato destro chiaro -> testi scuri */
+.scene--about {
+  --fg: var(--ink);
+  --title-size: 7vw;
+  color: var(--ink);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.8vw;
+}
+
+.stat {
+  display: grid;
+  gap: 0.2em;
+  padding: 1em 1.1em;
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.6);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.stat__value {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(22px, 2.4vw, 46px);
+  line-height: 1;
+  color: var(--navy);
+}
+
+.stat__label {
+  font-size: clamp(12px, 0.85vw, 16px);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.why {
+  font-size: clamp(14px, 1.05vw, 20px);
+  font-weight: 600;
+}
+
+.why__title {
+  margin-bottom: 0.6em;
+  font-size: 0.8em;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--navy);
+}
+
+/* 3 · Servizi: lato sinistro blu -> titolo chiaro, schede su pannello chiaro */
+.scene--services {
+  --fg: var(--white);
+  --title-size: 8.6vw;
+}
+
+.tabs.card {
+  padding: 1.3em;
+}
+
+.tabs__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em;
+  margin-bottom: 1.2em;
+}
+
+.tabs__tab {
+  min-height: 44px;
+  padding: 0.5em 1.1em;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: clamp(13px, 0.95vw, 18px);
+  background: rgba(11, 27, 48, 0.07);
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.tabs__tab:hover {
+  background: rgba(11, 27, 48, 0.14);
+}
+
+.tabs__tab[aria-selected='true'] {
+  background: var(--navy);
+  color: var(--white);
+}
+
+.tabs__panel {
+  font-size: clamp(14px, 1.05vw, 20px);
+  line-height: 1.5;
+  font-weight: 500;
+  animation: fade-up 0.45s var(--ease);
+}
+
+.tabs__notes {
+  margin-bottom: 0.3em;
+  font-size: 0.78em;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--azure);
+}
+
+.book-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8em 1.2em;
+  margin-top: 1.1em;
+}
+
+.book-row__meta {
+  font-weight: 700;
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+}
+
+/* 4 · Contatti: lato destro blu scuro -> testi bianchi */
+.scene--contact {
+  --fg: var(--white);
+  --title-size: 7.6vw;
+}
+
+.contact-list {
+  border-top: 1.5px solid var(--line-white);
+}
+
+.contact-list__row {
+  display: grid;
+  grid-template-columns: 7em 1fr;
+  align-items: baseline;
+  gap: 1em;
+  padding: 0.75em 0;
+  border-bottom: 1.5px solid var(--line-white);
+  font-size: clamp(14px, 1.1vw, 21px);
+}
+
+.contact-list dt {
+  font-size: 0.8em;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sky);
+}
+
+.contact-list dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.contact-list a {
+  text-decoration: none;
+  border-bottom: 1.5px solid var(--sky);
+}
+
+.contact-list a:hover {
+  color: var(--sky);
+}
+
+.contact__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8em;
+}
+
+.site-footer {
+  position: absolute;
+  left: 4vw;
+  /* Lascia spazio al pulsante rotondo in basso a destra */
+  right: calc(4vw + clamp(52px, 4.4vw, 84px));
+  bottom: max(2.5vh, env(safe-area-inset-bottom));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.4em 1.6em;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.site-footer a {
+  text-decoration: none;
+}
+
+.site-footer a:hover {
+  color: var(--white);
+  text-decoration: underline;
+}
+
+/* --- Pulsante "sezione successiva" (cerchio in basso a destra della foto 2) ------- */
+
+.next-btn {
+  position: fixed;
+  right: max(2vw, env(safe-area-inset-right));
+  bottom: max(2vw, env(safe-area-inset-bottom));
+  z-index: 15;
+  display: grid;
+  place-items: center;
+  width: clamp(52px, 4.4vw, 84px);
+  height: clamp(52px, 4.4vw, 84px);
+  border-radius: 50%;
+  background: var(--ice);
+  color: var(--navy);
+  box-shadow: 0 12px 30px -14px rgba(5, 20, 45, 0.7);
+  transition: transform 0.3s var(--ease);
+}
+
+.next-btn:hover {
+  transform: scale(1.06);
+}
+
+.next-btn > svg {
+  grid-area: 1 / 1;
+}
+
+.next-btn__ring {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.next-btn__ring circle {
+  fill: none;
+  stroke: var(--navy);
+  stroke-width: 2;
+  /* Lunghezza della circonferenza (2π·22): js/site.js aggiorna stroke-dashoffset */
+  stroke-dasharray: 138.23;
+  stroke-dashoffset: 138.23;
+}
+
+.next-btn__arrow {
+  width: 40%;
+  height: 40%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.4s var(--ease);
+}
+
+.next-btn.is-last .next-btn__arrow {
+  transform: rotate(180deg);
+}
+
+/* --- Dialog: menu mobile e prenotazione ------------------------------------------- */
+
+.dialog {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: var(--ink);
+  background: var(--ice);
+}
+
+.dialog::backdrop {
+  background: rgba(5, 20, 45, 0.45);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.dialog[open] {
+  animation: drawer-in 0.45s var(--ease);
+}
+
+.dialog[open]::backdrop {
+  animation: fade-in 0.3s ease;
+}
+
+@keyframes drawer-in {
+  from { transform: translateX(100%); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+}
+
+.dialog--drawer {
+  inset: 0 0 0 auto;
+  width: min(440px, 100%);
+  height: 100%;
+  max-height: none;
+  max-width: 100%;
+  display: none;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 0 1.5rem max(1.5rem, env(safe-area-inset-bottom));
+}
+
+.dialog--drawer[open] {
+  display: flex;
+}
+
+.dialog__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 72px;
+  margin-bottom: 0.5rem;
+  padding-top: env(safe-area-inset-top);
+}
+
+.dialog__head .header-btn {
+  color: inherit;
+  margin-right: -10px;
+}
+
+.dialog__title {
+  font-family: var(--font-display);
+  font-stretch: 112%;
+  font-weight: 800;
+  font-size: 1.5rem;
+  text-transform: uppercase;
+  color: var(--navy);
+}
+
+/* Menu mobile a tutto schermo */
+.dialog--menu {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  display: none;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 0 1.25rem max(1.5rem, env(safe-area-inset-bottom));
+  background: var(--navy);
+  color: var(--white);
+}
+
+.dialog--menu[open] {
+  display: flex;
+  animation: fade-in 0.3s ease;
+}
+
+.dialog--menu .logo {
+  font-size: 22px;
+}
+
+.menu__list {
+  display: grid;
+  border-top: 1px solid var(--line-white);
+}
+
+.menu__link {
+  display: block;
+  padding: 1.1rem 0;
+  border-bottom: 1px solid var(--line-white);
+  font-family: var(--font-display);
+  font-stretch: 112%;
+  font-weight: 800;
+  font-size: clamp(1.6rem, 8vw, 2.4rem);
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.menu__link[aria-current='true'] {
+  color: var(--sky);
+}
+
+.menu__cta {
+  margin-top: auto;
+}
+
+/* Modulo */
+.form {
+  display: grid;
+  gap: 1rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.field__label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.field__input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 0.9rem;
+  border: 1.5px solid var(--line-ink);
+  border-radius: 12px;
+  background: var(--white);
+  font-size: 16px; /* 16px evita lo zoom automatico di iOS */
+}
+
+.field__input:focus {
+  outline: none;
+  border-color: var(--azure);
+  box-shadow: 0 0 0 3px rgba(169, 220, 255, 0.8);
+}
+
+.form__intro {
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.consent {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.7rem;
+  align-items: start;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.consent input {
+  width: 1.2rem;
+  height: 1.2rem;
+  margin: 0.1rem 0 0;
+  accent-color: var(--navy);
+}
+
+.consent a,
+.form__note a {
+  color: var(--navy);
+  font-weight: 600;
+}
+
+.form__status {
+  min-height: 1.5em;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.form__status[data-state='ok'] {
+  padding: 0.8rem 1rem;
+  border-radius: 12px;
+  background: rgba(47, 143, 224, 0.12);
+}
+
+.form__status[data-state='error'] {
+  padding: 0.8rem 1rem;
+  border-radius: 12px;
+  background: rgba(200, 40, 40, 0.1);
+  color: #9b1c1c;
+}
+
+.form__note {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+  transform: none;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* --- Senza JavaScript --------------------------------------------------------------------
+ * Niente video guidato dallo scroll: le sezioni si impilano una sotto l'altra, ognuna con
+ * il fotogramma della foto di riferimento come sfondo. I pulsanti che aprono la
+ * prenotazione non funzionerebbero, quindi restano visibili solo telefono e indicazioni.
+ */
+.no-js .scroll-video {
+  height: auto;
+}
+
+.no-js .scroll-video__sticky {
+  position: static;
+  height: auto;
+  overflow: visible;
+}
+
+.no-js .scroll-video__canvas,
+.no-js .scroll-video__loader,
+.no-js .scroll-cue,
+.no-js .next-btn,
+.no-js .menu-btn,
+.no-js [data-dialog-open] {
+  display: none;
+}
+
+.no-js .site-header {
+  position: absolute;
+  opacity: 1;
+  visibility: visible;
+}
+
+.no-js .scene {
+  position: relative;
+  min-height: 100vh;
+  opacity: 1;
+  visibility: visible;
+  background: var(--bg) center / cover no-repeat;
+}
+
+.no-js .scene--intro { background-image: url(../assets/frames/desktop/frame_0001.webp); }
+.no-js .scene--hero { background-image: url(../assets/frames/desktop/frame_0083.webp); }
+.no-js .scene--about { background-image: url(../assets/frames/desktop/frame_0279.webp); }
+.no-js .scene--services { background-image: url(../assets/frames/desktop/frame_0409.webp); }
+.no-js .scene--contact { background-image: url(../assets/frames/desktop/frame_0553.webp); }
+
+/* --- Schermi orizzontali bassi (telefoni ruotati) ------------------------------------ */
+
+@media (orientation: landscape) and (max-height: 520px) {
+  :root {
+    --header-h: 44px;
+  }
+
+  .scene__lead,
+  .tabs__panel {
+    font-size: 13px;
+  }
+
+  .scene--left,
+  .scene--right {
+    gap: 10px;
+    padding-bottom: 36px;
+  }
+
+  .scene__panel {
+    gap: 10px;
+  }
+
+  .hero__lead {
+    top: 62%;
+    font-size: 13px;
+  }
+
+  .hero__cta {
+    top: 40%;
+    padding: 0.9em;
+  }
+
+  .hero__cta-text,
+  .why,
+  .tabs__panel > p:not(.tabs__notes) {
+    display: none;
+  }
+
+  .stat {
+    padding: 0.5em 0.7em;
+  }
+
+  .tabs.card {
+    padding: 0.8em;
+  }
+
+  .tabs__list {
+    margin-bottom: 0.6em;
+  }
+
+  .book-row {
+    margin-top: 0.4em;
+  }
+
+  .contact-list__row {
+    padding: 0.2em 0;
+  }
+
+  /* Telefoni ruotati: niente spazio per il cerchio, si scorre col dito */
+  .site-footer,
+  .next-btn {
+    display: none;
+  }
+}
+
+/* --- Mobile / tablet in verticale ----------------------------------------------------
+ * Stessa soglia che sceglie i frame mobile: i contenuti non possono più stare ai lati,
+ * quindi titolo in alto e pannello leggibile in basso.
+ */
+@media (max-width: 767px), (orientation: portrait) and (max-width: 900px) {
+  :root {
+    --gutter: 16px;
+    --header-h: 52px;
+    --loader-height: 2px;
+  }
+
+  .site-header {
+    grid-template-columns: 1fr auto;
+    padding-left: max(var(--gutter), env(safe-area-inset-left));
+    padding-right: max(calc(var(--gutter) - 10px), env(safe-area-inset-right));
+  }
+
+  .logo {
+    font-size: 21px;
+  }
+
+  .nav {
+    display: none;
+  }
+
+  .site-header__actions {
+    gap: 4px;
+  }
+
+  .header-cta {
+    min-height: 34px;
+    padding: 0 1.1em;
+    font-size: 13px;
+  }
+
+  .menu-btn {
+    display: inline-flex;
+    font-size: 13px;
+  }
+
+  .next-btn {
+    display: none;
+  }
+
+  /* Tutte le sezioni: titolo in alto, contenuti in un pannello in basso */
+  .scene--hero,
+  .scene--left,
+  .scene--right {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 16px;
+    padding:
+      calc(var(--header-h) + env(safe-area-inset-top) + 16px)
+      max(16px, env(safe-area-inset-right))
+      max(16px, env(safe-area-inset-bottom))
+      max(16px, env(safe-area-inset-left));
+  }
+
+  .scene--right > :not(.site-footer),
+  .scene--left > :not(.site-footer) {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .scene__title {
+    font-size: var(--title-size-m, 19vw);
+  }
+
+  .scene--about {
+    --title-size-m: 15vw; /* CHI SIAMO */
+  }
+
+  .scene--contact {
+    --title-size-m: 16.5vw; /* CONTATTI */
+  }
+
+  /* Su telefono la parte alta del video è più scura: titolo chiaro anche nella hero */
+  .scene--hero .scene__title {
+    background: var(--title-light);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 4px 18px rgba(6, 28, 74, 0.4));
+  }
+
+  .scene__panel,
+  .hero__body {
+    display: grid;
+    gap: 14px;
+    max-height: 58svh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 18px;
+    border-radius: 22px;
+    background: var(--glass-light);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    color: var(--ink);
+    --fg: var(--ink);
+  }
+
+  .scene__lead {
+    font-size: 15px;
+  }
+
+  /* Benvenuto */
+  .intro__title {
+    font-size: 14vw;
+  }
+
+  /* Hero: qui il pannello chiaro è già il contenitore .hero__body */
+  .hero__heading,
+  .hero__lead,
+  .hero__cta {
+    position: static;
+    width: auto;
+    padding: 0;
+    border-radius: 0;
+    background: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+
+  .hero__dash {
+    bottom: -3vw;
+    width: 6vw;
+  }
+
+  .hero__lead {
+    font-size: 15px;
+  }
+
+  .hero__cta {
+    gap: 8px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line-ink);
+  }
+
+  .hero__cta-kicker {
+    font-size: 17px;
+  }
+
+  .hero__cta-text {
+    font-size: 14px;
+  }
+
+  /* Chi siamo */
+  .stats {
+    gap: 8px;
+  }
+
+  .stat {
+    padding: 10px;
+    background: rgba(11, 27, 48, 0.05);
+  }
+
+  .stat__value {
+    font-size: 22px;
+  }
+
+  .stat__label {
+    font-size: 12px;
+  }
+
+  .why {
+    font-size: 14px;
+  }
+
+  /* Servizi: niente doppio pannello */
+  .tabs.card {
+    padding: 0;
+    background: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+
+  .tabs__list {
+    gap: 6px;
+  }
+
+  .tabs__tab {
+    padding: 0.45em 0.95em;
+    font-size: 13px;
+  }
+
+  .tabs__panel {
+    font-size: 14px;
+  }
+
+  /* Contatti: pannello scuro, il fondo qui è blu intenso */
+  .scene--contact .scene__panel {
+    background: var(--glass-dark);
+    color: var(--white);
+    --fg: var(--white);
+  }
+
+  .contact-list__row {
+    grid-template-columns: 5.5em 1fr;
+    font-size: 15px;
+  }
+
+  .contact__actions .btn--light {
+    flex: 1 1 100%;
+  }
+
+  .contact__actions .btn--ghost {
+    flex: 1 1 0;
+    padding-inline: 0.8em;
+    white-space: nowrap;
+  }
+
+  /* Il footer finisce sopra la base chiara della poltrona: fondo scuro per leggerlo */
+  .site-footer {
+    position: static;
+    justify-content: center;
+    gap: 0.2em 1.2em;
+    margin-top: -6px;
+    padding: 8px 12px;
+    border-radius: 14px;
+    background: var(--glass-dark);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    font-size: 11px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .dialog--drawer {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
